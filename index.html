@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Classroom Timetable</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root{
+    --navy:#1F2A44;
+    --ivory:#F7F5F0;
+    --gold:#C9A227;
+    --slate:#5B6472;
+    --white:#FFFFFF;
+    --green:#3F7D58;
+    --red:#B0453A;
+    --line:#DCD6C8;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI', Arial, sans-serif;
+    background:var(--ivory);
+    color:var(--navy);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 40px 40px;
+    min-height:100vh;
+  }
+  .app{
+    max-width:760px;
+    margin:0 auto;
+    padding:24px 16px 60px;
+  }
+  header.top{
+    text-align:center;
+    margin-bottom:20px;
+  }
+  header.top h1{
+    font-family:Georgia, 'Times New Roman', serif;
+    font-size:28px;
+    letter-spacing:0.5px;
+    margin:0 0 4px;
+    color:var(--navy);
+  }
+  header.top p{
+    margin:0;
+    color:var(--slate);
+    font-size:13px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+  }
+  nav.steps{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    margin:22px 0 28px;
+    flex-wrap:wrap;
+  }
+  nav.steps button{
+    border:1px solid var(--navy);
+    background:var(--white);
+    color:var(--navy);
+    padding:8px 16px;
+    border-radius:999px;
+    font-size:13px;
+    cursor:pointer;
+    transition:all .15s ease;
+  }
+  nav.steps button.active{
+    background:var(--navy);
+    color:var(--white);
+  }
+  nav.steps button:disabled{
+    opacity:0.4;
+    cursor:not-allowed;
+  }
+  .card{
+    background:var(--white);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:32px;
+    box-shadow:0 2px 10px rgba(31,42,68,0.06);
+  }
+  .page{display:none;}
+  .page.active{display:block;}
+  h2.page-title{
+    font-family:Georgia, serif;
+    font-size:20px;
+    margin:0 0 6px;
+  }
+  p.page-sub{
+    color:var(--slate);
+    font-size:13.5px;
+    margin:0 0 24px;
+  }
+  label{
+    display:block;
+    font-size:12.5px;
+    color:var(--slate);
+    margin-bottom:6px;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+  }
+  input[type=text], input[type=password], input[type=email], input[type=date], input[type=time]{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:6px;
+    font-size:14px;
+    margin-bottom:18px;
+    font-family:inherit;
+    background:#FDFCFA;
+  }
+  input:focus{
+    outline:2px solid var(--gold);
+    outline-offset:1px;
+  }
+  .btn{
+    display:inline-block;
+    background:var(--navy);
+    color:var(--white);
+    border:none;
+    padding:11px 22px;
+    border-radius:6px;
+    font-size:14px;
+    cursor:pointer;
+  }
+  .btn:hover{ background:#141d33; }
+  .btn.secondary{
+    background:var(--white);
+    color:var(--navy);
+    border:1px solid var(--navy);
+  }
+  .btn.danger{
+    background:var(--red);
+  }
+  .row{display:flex; gap:14px; flex-wrap:wrap;}
+  .row > div{flex:1; min-width:150px;}
+  .err{
+    color:var(--red);
+    font-size:13px;
+    margin:-10px 0 16px;
+    display:none;
+  }
+  table.sheet{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13.5px;
+    margin-top:10px;
+  }
+  table.sheet th{
+    background:var(--navy);
+    color:var(--white);
+    padding:9px 8px;
+    text-align:left;
+    font-weight:600;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.4px;
+  }
+  table.sheet td{
+    padding:9px 8px;
+    border:1px solid var(--line);
+    background:#FDFCFA;
+  }
+  table.sheet tr:nth-child(even) td{
+    background:#F2EFE8;
+  }
+  .empty{
+    text-align:center;
+    color:var(--slate);
+    padding:30px 0;
+    font-size:14px;
+  }
+  .del-btn{
+    background:none;
+    border:none;
+    color:var(--red);
+    cursor:pointer;
+    font-size:13px;
+    text-decoration:underline;
+  }
+  .actions-bottom{
+    margin-top:26px;
+    display:flex;
+    justify-content:space-between;
+  }
+  .status{
+    font-size:12px;
+    color:var(--green);
+    margin-top:14px;
+    display:none;
+  }
+  .welcome-icon{
+    font-size:40px;
+    text-align:center;
+    margin-bottom:10px;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <h1>Classroom &amp; Timetable</h1>
+    <p>Home &middot; Login &middot; Entry &middot; Sheet</p>
+  </header>
+
+  <nav class="steps">
+    <button data-page="0" class="active">1. Home</button>
+    <button data-page="1">2. Login</button>
+    <button data-page="2" id="navEntry" disabled>3. Entry</button>
+    <button data-page="3" id="navSheet" disabled>4. Sheet</button>
+  </nav>
+
+  <div class="card">
+
+    <!-- PAGE 1: HOME -->
+    <section class="page active" id="page0">
+      <div class="welcome-icon">🏫</div>
+      <h2 class="page-title" style="text-align:center;">Welcome</h2>
+      <p class="page-sub" style="text-align:center;">
+        Log in to this app and add faculty timetable entries.
+        Every entry you add is automatically saved into a table, just like an Excel sheet.
+      </p>
+      <div style="text-align:center; margin-top:20px;">
+        <button class="btn" onclick="goTo(1)">Go to Login &rarr;</button>
+      </div>
+    </section>
+
+    <!-- PAGE 2: LOGIN -->
+    <section class="page" id="page1">
+      <h2 class="page-title">Login</h2>
+      <p class="page-sub">Enter your Gmail ID and Password.</p>
+      <label for="gmail">Gmail ID</label>
+      <input type="email" id="gmail" placeholder="example@gmail.com">
+      <label for="pass">Password</label>
+      <input type="password" id="pass" placeholder="••••••••">
+      <div class="err" id="loginErr">Please enter a valid Gmail ID and a Password with at least 4 characters.</div>
+      <div class="actions-bottom">
+        <button class="btn secondary" onclick="goTo(0)">&larr; Back</button>
+        <button class="btn" onclick="doLogin()">Login</button>
+      </div>
+    </section>
+
+    <!-- PAGE 3: ENTRY FORM -->
+    <section class="page" id="page2">
+      <h2 class="page-title">Timetable Entry</h2>
+      <p class="page-sub">Fill in the Date, Time, Faculty, Room No and Subject/Class, then add it to the sheet.</p>
+      <div class="row">
+        <div>
+          <label for="fDate">Date</label>
+          <input type="date" id="fDate">
+        </div>
+        <div>
+          <label for="fTime">Time</label>
+          <input type="time" id="fTime">
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="fFaculty">Faculty</label>
+          <input type="text" id="fFaculty" placeholder="Faculty Name">
+        </div>
+        <div>
+          <label for="fRoom">Room No</label>
+          <input type="text" id="fRoom" placeholder="e.g. 204">
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="fName">Subject / Class Name</label>
+          <input type="text" id="fName" placeholder="Subject / Class">
+        </div>
+      </div>
+      <div class="err" id="entryErr">Please fill in all fields.</div>
+      <div class="status" id="entryStatus">✓ Entry added to the sheet!</div>
+      <div class="actions-bottom">
+        <button class="btn secondary" onclick="goTo(1)">&larr; Back</button>
+        <div>
+          <button class="btn" onclick="addEntry()">Add to Sheet</button>
+          <button class="btn secondary" onclick="goTo(3)">View Sheet &rarr;</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE 4: EXCEL-LIKE SHEET -->
+    <section class="page" id="page3">
+      <h2 class="page-title">Timetable Sheet</h2>
+      <p class="page-sub">All the entries you've added will appear here, just like an Excel sheet.</p>
+      <table class="sheet" id="sheetTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Faculty</th>
+            <th>Room No</th>
+            <th>Subject / Class</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="sheetBody"></tbody>
+      </table>
+      <div class="empty" id="sheetEmpty" style="display:none;">No entries have been added yet.</div>
+      <div class="actions-bottom">
+        <button class="btn secondary" onclick="goTo(2)">&larr; New Entry</button>
+        <button class="btn danger" onclick="clearAll()">Clear All</button>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+let entries = [];
+let loggedIn = false;
+
+async function loadEntries(){
+  try{
+    const res = await window.storage.get('timetable-entries', false);
+    entries = res ? JSON.parse(res.value) : [];
+  }catch(e){
+    entries = [];
+  }
+  renderSheet();
+}
+
+async function saveEntries(){
+  try{
+    await window.storage.set('timetable-entries', JSON.stringify(entries), false);
+  }catch(e){
+    console.error('Save failed', e);
+  }
+}
+
+function goTo(pageIdx){
+  if((pageIdx === 2 || pageIdx === 3) && !loggedIn){
+    goTo(1);
+    return;
+  }
+  document.querySelectorAll('.page').forEach((p,i)=>{
+    p.classList.toggle('active', i===pageIdx);
+  });
+  document.querySelectorAll('nav.steps button').forEach((b,i)=>{
+    b.classList.toggle('active', i===pageIdx);
+  });
+}
+
+document.querySelectorAll('nav.steps button').forEach(btn=>{
+  btn.addEventListener('click', ()=> goTo(parseInt(btn.dataset.page)));
+});
+
+function doLogin(){
+  const gmail = document.getElementById('gmail').value.trim();
+  const pass = document.getElementById('pass').value.trim();
+  const err = document.getElementById('loginErr');
+  const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(gmail);
+  if(!validEmail || pass.length < 4){
+    err.style.display = 'block';
+    return;
+  }
+  err.style.display = 'none';
+  loggedIn = true;
+  document.getElementById('navEntry').disabled = false;
+  document.getElementById('navSheet').disabled = false;
+  goTo(2);
+}
+
+async function addEntry(){
+  const date = document.getElementById('fDate').value;
+  const time = document.getElementById('fTime').value;
+  const faculty = document.getElementById('fFaculty').value.trim();
+  const room = document.getElementById('fRoom').value.trim();
+  const name = document.getElementById('fName').value.trim();
+  const err = document.getElementById('entryErr');
+  const status = document.getElementById('entryStatus');
+
+  if(!date || !time || !faculty || !room || !name){
+    err.style.display = 'block';
+    status.style.display = 'none';
+    return;
+  }
+  err.style.display = 'none';
+  entries.push({date, time, faculty, room, name});
+  await saveEntries();
+  renderSheet();
+
+  status.style.display = 'block';
+  setTimeout(()=> status.style.display = 'none', 2000);
+
+  document.getElementById('fDate').value = '';
+  document.getElementById('fTime').value = '';
+  document.getElementById('fFaculty').value = '';
+  document.getElementById('fRoom').value = '';
+  document.getElementById('fName').value = '';
+}
+
+function renderSheet(){
+  const body = document.getElementById('sheetBody');
+  const empty = document.getElementById('sheetEmpty');
+  body.innerHTML = '';
+  if(entries.length === 0){
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  entries.forEach((e, i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${i+1}</td>
+      <td>${e.date}</td>
+      <td>${e.time}</td>
+      <td>${e.faculty}</td>
+      <td>${e.room || ''}</td>
+      <td>${e.name}</td>
+      <td><button class="del-btn" onclick="deleteEntry(${i})">Delete</button></td>
+    `;
+    body.appendChild(tr);
+  });
+}
+
+async function deleteEntry(i){
+  entries.splice(i,1);
+  await saveEntries();
+  renderSheet();
+}
+
+async function clearAll(){
+  if(!confirm('Delete all entries?')) return;
+  entries = [];
+  await saveEntries();
+  renderSheet();
+}
+
+loadEntries();
+</script>
+</body>
+</html>
